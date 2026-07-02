@@ -6,8 +6,44 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		AA10000000000000000000A3 /* PrepCore in Frameworks */ = {isa = PBXBuildFile; productRef = AA10000000000000000000A2 /* PrepCore */; };
+		BB20000000000000000000B1 /* DeviceActivityMonitorExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB20000000000000000000C1 /* DeviceActivityMonitorExtension.swift */; };
+		BB20000000000000000000B2 /* BlockerShared.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB20000000000000000000C2 /* BlockerShared.swift */; };
+		BB20000000000000000000B3 /* LockINMonitor.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = BB20000000000000000000C0 /* LockINMonitor.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		BB20000000000000000000E2 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 16F94C952FDB9C410079ED54 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = BB20000000000000000000E0;
+			remoteInfo = LockINMonitor;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		BB20000000000000000000D0 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				BB20000000000000000000B3 /* LockINMonitor.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
 		16F94C9D2FDB9C410079ED54 /* LockIN.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LockIN.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		BB20000000000000000000C0 /* LockINMonitor.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = LockINMonitor.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		BB20000000000000000000C1 /* DeviceActivityMonitorExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceActivityMonitorExtension.swift; sourceTree = "<group>"; };
+		BB20000000000000000000C2 /* BlockerShared.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = BlockerShared.swift; path = ../LockIN/BlockerShared.swift; sourceTree = "<group>"; };
+		BB20000000000000000000C3 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		BB20000000000000000000C4 /* LockINMonitor.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = LockINMonitor.entitlements; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -23,6 +59,14 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AA10000000000000000000A3 /* PrepCore in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		BB20000000000000000000D2 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -33,6 +77,7 @@
 			isa = PBXGroup;
 			children = (
 				16F94C9F2FDB9C410079ED54 /* LockIN */,
+				BB20000000000000000000C5 /* LockINMonitor */,
 				16F94C9E2FDB9C410079ED54 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -41,8 +86,20 @@
 			isa = PBXGroup;
 			children = (
 				16F94C9D2FDB9C410079ED54 /* LockIN.app */,
+				BB20000000000000000000C0 /* LockINMonitor.appex */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		BB20000000000000000000C5 /* LockINMonitor */ = {
+			isa = PBXGroup;
+			children = (
+				BB20000000000000000000C1 /* DeviceActivityMonitorExtension.swift */,
+				BB20000000000000000000C2 /* BlockerShared.swift */,
+				BB20000000000000000000C3 /* Info.plist */,
+				BB20000000000000000000C4 /* LockINMonitor.entitlements */,
+			);
+			path = LockINMonitor;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -55,20 +112,40 @@
 				16F94C992FDB9C410079ED54 /* Sources */,
 				16F94C9A2FDB9C410079ED54 /* Frameworks */,
 				16F94C9B2FDB9C410079ED54 /* Resources */,
+				BB20000000000000000000D0 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				BB20000000000000000000E1 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				16F94C9F2FDB9C410079ED54 /* LockIN */,
 			);
 			name = LockIN;
 			packageProductDependencies = (
+				AA10000000000000000000A2 /* PrepCore */,
 			);
 			productName = LockIN;
 			productReference = 16F94C9D2FDB9C410079ED54 /* LockIN.app */;
 			productType = "com.apple.product-type.application";
+		};
+		BB20000000000000000000E0 /* LockINMonitor */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = BB20000000000000000000F0 /* Build configuration list for PBXNativeTarget "LockINMonitor" */;
+			buildPhases = (
+				BB20000000000000000000D1 /* Sources */,
+				BB20000000000000000000D2 /* Frameworks */,
+				BB20000000000000000000D3 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = LockINMonitor;
+			productName = LockINMonitor;
+			productReference = BB20000000000000000000C0 /* LockINMonitor.appex */;
+			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
 
@@ -83,6 +160,9 @@
 					16F94C9C2FDB9C410079ED54 = {
 						CreatedOnToolsVersion = 26.5;
 					};
+					BB20000000000000000000E0 = {
+						CreatedOnToolsVersion = 26.5;
+					};
 				};
 			};
 			buildConfigurationList = 16F94C982FDB9C410079ED54 /* Build configuration list for PBXProject "LockIN" */;
@@ -94,18 +174,29 @@
 			);
 			mainGroup = 16F94C942FDB9C400079ED54;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				AA10000000000000000000A1 /* XCLocalSwiftPackageReference "../PrepCore" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 16F94C9E2FDB9C410079ED54 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
 				16F94C9C2FDB9C410079ED54 /* LockIN */,
+				BB20000000000000000000E0 /* LockINMonitor */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
 		16F94C9B2FDB9C410079ED54 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		BB20000000000000000000D3 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -122,7 +213,24 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		BB20000000000000000000D1 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				BB20000000000000000000B1 /* DeviceActivityMonitorExtension.swift in Sources */,
+				BB20000000000000000000B2 /* BlockerShared.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		BB20000000000000000000E1 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = BB20000000000000000000E0 /* LockINMonitor */;
+			targetProxy = BB20000000000000000000E2 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		16F94CA62FDB9C420079ED54 /* Debug */ = {
@@ -251,6 +359,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = LockIN/LockIN.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 8Z7RVWN8R3;
@@ -283,6 +392,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = LockIN/LockIN.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 8Z7RVWN8R3;
@@ -310,6 +420,60 @@
 			};
 			name = Release;
 		};
+		BB20000000000000000000F1 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = LockINMonitor/LockINMonitor.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 8Z7RVWN8R3;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = LockINMonitor/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = LockINMonitor;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = tranq.LockIN.LockINMonitor;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		BB20000000000000000000F2 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = LockINMonitor/LockINMonitor.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 8Z7RVWN8R3;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = LockINMonitor/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = LockINMonitor;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = tranq.LockIN.LockINMonitor;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -331,7 +495,30 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
+		BB20000000000000000000F0 /* Build configuration list for PBXNativeTarget "LockINMonitor" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				BB20000000000000000000F1 /* Debug */,
+				BB20000000000000000000F2 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 /* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		AA10000000000000000000A1 /* XCLocalSwiftPackageReference "../PrepCore" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ../PrepCore;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		AA10000000000000000000A2 /* PrepCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = PrepCore;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 16F94C952FDB9C410079ED54 /* Project object */;
 }
