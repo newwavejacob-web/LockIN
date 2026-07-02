@@ -11,6 +11,10 @@
 		BB20000000000000000000B1 /* DeviceActivityMonitorExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB20000000000000000000C1 /* DeviceActivityMonitorExtension.swift */; };
 		BB20000000000000000000B2 /* BlockerShared.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB20000000000000000000C2 /* BlockerShared.swift */; };
 		BB20000000000000000000B3 /* LockINMonitor.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = BB20000000000000000000C0 /* LockINMonitor.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		CC30000000000000000000B1 /* ShieldConfigurationExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC30000000000000000000C1 /* ShieldConfigurationExtension.swift */; };
+		CC30000000000000000000B3 /* LockINShieldConfig.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = CC30000000000000000000C0 /* LockINShieldConfig.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		DD40000000000000000000B1 /* ShieldActionExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD40000000000000000000C1 /* ShieldActionExtension.swift */; };
+		DD40000000000000000000B3 /* LockINShieldAction.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = DD40000000000000000000C0 /* LockINShieldAction.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -20,6 +24,20 @@
 			proxyType = 1;
 			remoteGlobalIDString = BB20000000000000000000E0;
 			remoteInfo = LockINMonitor;
+		};
+		CC30000000000000000000E2 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 16F94C952FDB9C410079ED54 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = CC30000000000000000000E0;
+			remoteInfo = LockINShieldConfig;
+		};
+		DD40000000000000000000E2 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 16F94C952FDB9C410079ED54 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = DD40000000000000000000E0;
+			remoteInfo = LockINShieldAction;
 		};
 /* End PBXContainerItemProxy section */
 
@@ -31,6 +49,8 @@
 			dstSubfolderSpec = 13;
 			files = (
 				BB20000000000000000000B3 /* LockINMonitor.appex in Embed Foundation Extensions */,
+				CC30000000000000000000B3 /* LockINShieldConfig.appex in Embed Foundation Extensions */,
+				DD40000000000000000000B3 /* LockINShieldAction.appex in Embed Foundation Extensions */,
 			);
 			name = "Embed Foundation Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -44,6 +64,14 @@
 		BB20000000000000000000C2 /* BlockerShared.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = BlockerShared.swift; path = ../LockIN/BlockerShared.swift; sourceTree = "<group>"; };
 		BB20000000000000000000C3 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		BB20000000000000000000C4 /* LockINMonitor.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = LockINMonitor.entitlements; sourceTree = "<group>"; };
+		CC30000000000000000000C0 /* LockINShieldConfig.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = LockINShieldConfig.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		CC30000000000000000000C1 /* ShieldConfigurationExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShieldConfigurationExtension.swift; sourceTree = "<group>"; };
+		CC30000000000000000000C3 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		CC30000000000000000000C4 /* LockINShieldConfig.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = LockINShieldConfig.entitlements; sourceTree = "<group>"; };
+		DD40000000000000000000C0 /* LockINShieldAction.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = LockINShieldAction.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		DD40000000000000000000C1 /* ShieldActionExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShieldActionExtension.swift; sourceTree = "<group>"; };
+		DD40000000000000000000C3 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		DD40000000000000000000C4 /* LockINShieldAction.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = LockINShieldAction.entitlements; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -70,6 +98,20 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		CC30000000000000000000D2 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		DD40000000000000000000D2 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -78,6 +120,8 @@
 			children = (
 				16F94C9F2FDB9C410079ED54 /* LockIN */,
 				BB20000000000000000000C5 /* LockINMonitor */,
+				CC30000000000000000000C5 /* LockINShieldConfig */,
+				DD40000000000000000000C5 /* LockINShieldAction */,
 				16F94C9E2FDB9C410079ED54 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -87,6 +131,8 @@
 			children = (
 				16F94C9D2FDB9C410079ED54 /* LockIN.app */,
 				BB20000000000000000000C0 /* LockINMonitor.appex */,
+				CC30000000000000000000C0 /* LockINShieldConfig.appex */,
+				DD40000000000000000000C0 /* LockINShieldAction.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -100,6 +146,26 @@
 				BB20000000000000000000C4 /* LockINMonitor.entitlements */,
 			);
 			path = LockINMonitor;
+			sourceTree = "<group>";
+		};
+		CC30000000000000000000C5 /* LockINShieldConfig */ = {
+			isa = PBXGroup;
+			children = (
+				CC30000000000000000000C1 /* ShieldConfigurationExtension.swift */,
+				CC30000000000000000000C3 /* Info.plist */,
+				CC30000000000000000000C4 /* LockINShieldConfig.entitlements */,
+			);
+			path = LockINShieldConfig;
+			sourceTree = "<group>";
+		};
+		DD40000000000000000000C5 /* LockINShieldAction */ = {
+			isa = PBXGroup;
+			children = (
+				DD40000000000000000000C1 /* ShieldActionExtension.swift */,
+				DD40000000000000000000C3 /* Info.plist */,
+				DD40000000000000000000C4 /* LockINShieldAction.entitlements */,
+			);
+			path = LockINShieldAction;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -118,6 +184,8 @@
 			);
 			dependencies = (
 				BB20000000000000000000E1 /* PBXTargetDependency */,
+				CC30000000000000000000E1 /* PBXTargetDependency */,
+				DD40000000000000000000E1 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				16F94C9F2FDB9C410079ED54 /* LockIN */,
@@ -147,6 +215,40 @@
 			productReference = BB20000000000000000000C0 /* LockINMonitor.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
+		CC30000000000000000000E0 /* LockINShieldConfig */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = CC30000000000000000000F0 /* Build configuration list for PBXNativeTarget "LockINShieldConfig" */;
+			buildPhases = (
+				CC30000000000000000000D1 /* Sources */,
+				CC30000000000000000000D2 /* Frameworks */,
+				CC30000000000000000000D3 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = LockINShieldConfig;
+			productName = LockINShieldConfig;
+			productReference = CC30000000000000000000C0 /* LockINShieldConfig.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+		DD40000000000000000000E0 /* LockINShieldAction */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = DD40000000000000000000F0 /* Build configuration list for PBXNativeTarget "LockINShieldAction" */;
+			buildPhases = (
+				DD40000000000000000000D1 /* Sources */,
+				DD40000000000000000000D2 /* Frameworks */,
+				DD40000000000000000000D3 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = LockINShieldAction;
+			productName = LockINShieldAction;
+			productReference = DD40000000000000000000C0 /* LockINShieldAction.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -161,6 +263,12 @@
 						CreatedOnToolsVersion = 26.5;
 					};
 					BB20000000000000000000E0 = {
+						CreatedOnToolsVersion = 26.5;
+					};
+					CC30000000000000000000E0 = {
+						CreatedOnToolsVersion = 26.5;
+					};
+					DD40000000000000000000E0 = {
 						CreatedOnToolsVersion = 26.5;
 					};
 				};
@@ -184,6 +292,8 @@
 			targets = (
 				16F94C9C2FDB9C410079ED54 /* LockIN */,
 				BB20000000000000000000E0 /* LockINMonitor */,
+				CC30000000000000000000E0 /* LockINShieldConfig */,
+				DD40000000000000000000E0 /* LockINShieldAction */,
 			);
 		};
 /* End PBXProject section */
@@ -197,6 +307,20 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		BB20000000000000000000D3 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		CC30000000000000000000D3 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		DD40000000000000000000D3 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -222,6 +346,22 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		CC30000000000000000000D1 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				CC30000000000000000000B1 /* ShieldConfigurationExtension.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		DD40000000000000000000D1 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				DD40000000000000000000B1 /* ShieldActionExtension.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -229,6 +369,16 @@
 			isa = PBXTargetDependency;
 			target = BB20000000000000000000E0 /* LockINMonitor */;
 			targetProxy = BB20000000000000000000E2 /* PBXContainerItemProxy */;
+		};
+		CC30000000000000000000E1 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = CC30000000000000000000E0 /* LockINShieldConfig */;
+			targetProxy = CC30000000000000000000E2 /* PBXContainerItemProxy */;
+		};
+		DD40000000000000000000E1 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = DD40000000000000000000E0 /* LockINShieldAction */;
+			targetProxy = DD40000000000000000000E2 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -474,6 +624,114 @@
 			};
 			name = Release;
 		};
+		CC30000000000000000000F1 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = LockINShieldConfig/LockINShieldConfig.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 8Z7RVWN8R3;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = LockINShieldConfig/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = LockINShieldConfig;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = tranq.LockIN.LockINShieldConfig;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		CC30000000000000000000F2 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = LockINShieldConfig/LockINShieldConfig.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 8Z7RVWN8R3;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = LockINShieldConfig/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = LockINShieldConfig;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = tranq.LockIN.LockINShieldConfig;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		DD40000000000000000000F1 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = LockINShieldAction/LockINShieldAction.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 8Z7RVWN8R3;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = LockINShieldAction/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = LockINShieldAction;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = tranq.LockIN.LockINShieldAction;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		DD40000000000000000000F2 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = LockINShieldAction/LockINShieldAction.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 8Z7RVWN8R3;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = LockINShieldAction/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = LockINShieldAction;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = tranq.LockIN.LockINShieldAction;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -500,6 +758,24 @@
 			buildConfigurations = (
 				BB20000000000000000000F1 /* Debug */,
 				BB20000000000000000000F2 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		CC30000000000000000000F0 /* Build configuration list for PBXNativeTarget "LockINShieldConfig" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				CC30000000000000000000F1 /* Debug */,
+				CC30000000000000000000F2 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		DD40000000000000000000F0 /* Build configuration list for PBXNativeTarget "LockINShieldAction" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				DD40000000000000000000F1 /* Debug */,
+				DD40000000000000000000F2 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
