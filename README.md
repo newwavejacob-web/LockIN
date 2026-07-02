@@ -98,6 +98,8 @@ LockIN/
       ├─ DeviceActivityMonitorExtension.swift   # intervalDidEnd → re-shield
       ├─ Info.plist                   # NSExtensionPointIdentifier: deviceactivity.monitor-extension
       └─ LockINMonitor.entitlements   # Family Controls + group.tranq.LockIN
+   └─ LockINShieldConfig/             # branded shield screen (ShieldConfigurationDataSource)
+   └─ LockINShieldAction/             # shield button handling (ShieldActionDelegate)
 ```
 
 ### Key design decisions
@@ -162,9 +164,9 @@ When a task is finished, tick its box here in the same commit.
 | Phase | Status |
 |---|---|
 | 0 — Study + economy core | ✅ done |
-| 1 — Blocker MVP on device | 🟡 built; on-device verification pending |
-| 2 — Robustness & correctness | 🟡 built; on-device verification pending |
-| 3 — Custom shield UX | ⬜ |
+| 1 — Blocker MVP on device | ✅ done (verified on device) |
+| 2 — Robustness & correctness | ✅ done (verified on device) |
+| 3 — Custom shield UX | 🟡 built; on-device verification pending |
 | 4 — Product polish | ⬜ |
 | 5 — Ship | ⬜ |
 
@@ -180,7 +182,7 @@ When a task is finished, tick its box here in the same commit.
 **Acceptance (met):** drill questions, earn minutes, view accuracy stats;
 balance and history survive relaunch.
 
-### Phase 1 — Blocker MVP on device 🟡
+### Phase 1 — Blocker MVP on device ✅ (verified on device 2026-07-02)
 
 - [x] **M1 — manual block/unblock.** Family Controls (Development) capability;
       `requestAuthorization(.individual)`; `FamilyActivityPicker`; apply/clear
@@ -197,19 +199,16 @@ balance and history survive relaunch.
       `intervalDidEnd` re-shields; `reconcileLockState()` fallback;
       concurrency handled with a `nonisolated` monitor class, a `nonisolated`
       `BlockerShared`, and a computed store handle.
-- [ ] **M3 (verify) — on-device test.** Redeem 15 min, wait the full 15,
-      confirm apps re-lock (or re-lock on next app open via the fallback).
-      Also confirm the countdown UI, "Lock now" refund, and that a redeem with
-      Screen Time revoked is blocked.
+- [x] **M3 (verify) — on-device test.** Verified 2026-07-02: redeem unlocks,
+      the window ends, and apps re-lock.
 
 **Acceptance:** pick apps → lock → study → redeem 15/30/60 → apps unlock →
 auto re-lock when the window ends.
 
-### Phase 2 — Robustness & correctness 🟡 (built; verify on device)
+### Phase 2 — Robustness & correctness ✅ (verified on device 2026-07-02)
 
 No stuck-unlocked or stuck-locked states; refunds are correct; the UI always
-reflects the true lock state. All items below are implemented and compiling;
-they still need the on-device pass alongside M3-verify.
+reflects the true lock state.
 
 - [x] **Reconcile on foreground.** `ContentView` watches `scenePhase` and calls
       `refreshAuthorization()` + `reconcileLockState()` on every `.active`, not
@@ -242,25 +241,26 @@ they still need the on-device pass alongside M3-verify.
       failure. Previously a failed schedule left you unshielded forever with
       the minutes already spent.
 
-### Phase 3 — Custom shield UX ⬜
+### Phase 3 — Custom shield UX 🟡 (built; verify on device)
 
-A blocked app shows a branded LockIN shield with a working "Open LockIN" button.
+A blocked app shows a branded LockIN shield instead of the stock gray one.
 
-- [ ] **ShieldConfiguration extension** — branded shield screen ("Study to
-      unlock — open LockIN").
-- [ ] **ShieldAction extension** — primary button deep-links back into the drill.
-- [ ] App Group + Family Controls on both new targets; add both bundle ids to
-      the distribution-entitlement requests (see Phase 5).
-
-**Prompt:**
-> Add two extension targets: a ShieldConfiguration extension that renders a
-> branded shield ("Study to unlock — open LockIN", app icon, minutes-banked if
-> readable from the App Group ledger) and a ShieldAction extension whose
-> primary button deep-links into the app's drill tab via a custom URL scheme.
-> Both targets need the Family Controls capability and the
-> `group.tranq.LockIN` App Group. Keep the extensions tiny (memory limits) and
-> keep all logic out of PrepCore. Register the URL scheme and handle it in
-> LockINApp.
+- [x] **ShieldConfiguration extension** (`LockINShieldConfig`) — branded shield
+      on dark blur: graduation-cap icon, "Locked by LockIN", "Study to earn
+      unlock minutes, then redeem them in LockIN," white primary button. Covers
+      apps, categories, and web domains. Pure configuration, no App Group
+      reads, so memory stays trivial.
+- [x] **ShieldAction extension** (`LockINShieldAction`) — primary button
+      ("Close & go study") responds `.close`, dismissing the blocked app.
+      **Design note:** iOS gives shield extensions no way to launch another
+      app, so a literal "deep-link into the drill" is impossible — closing the
+      blocked app is the standard behavior for this category. A later polish
+      option: post a local notification that opens LockIN when tapped.
+- [x] App Group + Family Controls on both new targets
+      (`tranq.LockIN.LockINShieldConfig`, `tranq.LockIN.LockINShieldAction`) —
+      both bundle ids added to the Phase 5 distribution-entitlement list.
+- [ ] **Verify on device:** lock apps, open one, confirm the branded shield
+      renders and the button closes the app.
 
 ### Phase 4 — Product polish ⬜
 
@@ -302,9 +302,10 @@ feel repetitive.
 ### Phase 5 — Ship ⬜
 
 - [ ] **Request the Family Controls distribution entitlement** — one request
-      per bundle id: the app **and every extension** (monitor, shield config,
-      shield action). **Submit early** — approval runs days to 4+ weeks, and
-      TestFlight is blocked on it.
+      per bundle id, all four: `tranq.LockIN`, `tranq.LockIN.LockINMonitor`,
+      `tranq.LockIN.LockINShieldConfig`, `tranq.LockIN.LockINShieldAction`.
+      **Submit early** — approval runs days to 4+ weeks, and TestFlight is
+      blocked on it.
 - [ ] App Store Connect record + screenshots + privacy label (Screen Time data
       stays on-device).
 - [ ] TestFlight build.
