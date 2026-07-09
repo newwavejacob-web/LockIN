@@ -15,7 +15,7 @@ window ends.
 > [Roadmap](#roadmap-to-a-polished-product).
 
 ---
-
+p0-=
 ## How it works
 
 1. **Authorize & pick.** First run asks for Screen Time authorization
