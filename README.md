@@ -23,11 +23,20 @@ p0-=
    shielded.
 2. **Lock.** Shields are applied via a named `ManagedSettingsStore` (`"lockin"`).
    The OS enforces them — they survive app kills and reboots.
-3. **Study.** Drill GRE quant questions. Correct answers earn seconds, scaled by
-   difficulty and clamped by a daily cap. Earnings land in an append-only ledger.
-4. **Redeem.** Spend banked minutes (15/30/60). The ledger is debited **first**;
-   only on success are the shields cleared and a `DeviceActivity` window
-   scheduled.
+3. **Study.** Drill GRE quant questions in a continuous rolling session — one
+   question at a time, drawn to favor your weakest topics, no fixed length and
+   no end screen. Each correct answer banks its seconds the moment it's graded,
+   scaled by difficulty and clamped by a daily cap; a persistent header shows
+   the live banked balance, and Done just leaves. Earnings land in an
+   append-only ledger.
+4. **Redeem.** Two ways, both debit the ledger **first** and touch the OS only
+   on success:
+   - **Whole selection, wall-clock:** spend banked minutes (15/30/60) to lift
+     every shield for that many minutes.
+   - **One app, usage time:** buy N minutes of *use* for a single app. Shields
+     are per-app — the store always holds (selected − unlocked) — and the
+     relock is a `DeviceActivityEvent` usage threshold, so the clock only runs
+     while that app is actually used (end-of-day safety deadline at the latest).
 5. **Re-lock.** When the window ends, the Device Activity Monitor extension
    re-applies the shields. A `reconcileLockState()` fallback re-shields on
    every app foreground if the extension callback never fires (it's unreliable
@@ -57,11 +66,12 @@ Three layers; dependencies only point inward.
 └─────────────────────────────────────────────────────────┘
 ```
 
-**The one wire between the economy and the OS:**
+**The one wire between the economy and the OS** (debit the ledger, touch the
+OS only on success, refund the session id if the OS step fails):
 
 ```
-AppModel.spend(seconds:label:)  →  BlockerController.unlock(forMinutes:)
-        (debit the ledger)            (touch the OS only on success)
+AppModel.spend(seconds:on: UnlockSession)  →  BlockerController.unlock(forMinutes:)        # whole selection, wall-clock
+                                           →  BlockerController.unlock(appToken:label:usageMinutes:)  # one app, usage time
 ```
 
 PrepCore imports **no system frameworks** and its public API and 30 XCTest
@@ -93,7 +103,8 @@ LockIN/
       ├─ HomeView.swift / DrillView.swift / StatsView.swift
       ├─ BlockerController.swift      # authorization, shields, unlock scheduling, cancel, reconcile
       ├─ BlockerView.swift            # picker, lock/unlock, redeem + countdown/refund UI
-      └─ BlockerShared.swift          # compiled into BOTH targets (App Group, named store handle)
+      ├─ UnlockRequestRouter.swift    # shield-tap handoff: consume pendingUnlockToken, route to drill
+      └─ BlockerShared.swift          # compiled into app + monitor + shield-action targets
    └─ LockINMonitor/                  # Device Activity Monitor extension target
       ├─ DeviceActivityMonitorExtension.swift   # intervalDidEnd → re-shield
       ├─ Info.plist                   # NSExtensionPointIdentifier: deviceactivity.monitor-extension
@@ -120,6 +131,14 @@ LockIN/
 - **Questions live in code, not SwiftData.** Only the ledger and attempts
   persist. Seed questions have fixed UUIDs so stored attempts keep joining to
   the right question across launches and edits.
+- **The drill is a continuous rolling session; draw order is UI-side.**
+  `DrillView` draws one question at a time, weighted by topic weakness
+  (accuracy from `Stats.byTopic` via `model.topicStats`: 0% accuracy weighs 4×
+  a mastered topic, unseen topics sit at 2.5×), skipping the last few shown to
+  avoid immediate repeats. Banking happens per answer through
+  `AppModel.submit` → `recordEarn` — there is no session total to award at the
+  end, so there is no end screen. The weighting lives entirely in the app
+  target; PrepCore's API is untouched.
 - **No penalties.** Wrong answers earn 0, never negative.
 
 ## Project facts (quick reference)
@@ -251,22 +270,68 @@ A blocked app shows a branded LockIN shield instead of the stock gray one.
       apps, categories, and web domains. Pure configuration, no App Group
       reads, so memory stays trivial.
 - [x] **ShieldAction extension** (`LockINShieldAction`) — primary button
-      ("Close & go study") responds `.close`, dismissing the blocked app.
-      **Design note:** iOS gives shield extensions no way to launch another
-      app, so a literal "deep-link into the drill" is impossible — closing the
-      blocked app is the standard behavior for this category. A later polish
-      option: post a local notification that opens LockIN when tapped.
+      ("Close & go study") records the tapped app's `ApplicationToken` +
+      timestamp in App Group defaults (`pendingUnlockToken` /
+      `pendingUnlockAt`), schedules a local notification ("Study to unlock
+      this app — tap to open LockIN"), and responds `.close`.
+      **Design note:** iOS gives shield extensions no supported API to launch
+      the parent app, so the notification tap is the only route from a shield
+      into LockIN. `BlockerShared.swift` is now compiled into this target too
+      (app + monitor + shield action).
+- [x] **Per-app usage unlocks** (2026-07-09): shields are per-app — while
+      blocking is on, the "lockin" store's `shield.applications` is always
+      (selected − unlocked). `BlockerController.unlock(appToken:label:usageMinutes:)`
+      debits the ledger first (`AppModel.spend(seconds:on:)`, keeping the
+      `UnlockSession` id), lifts just that token on success, and starts a
+      dedicated DeviceActivity named by the session id: interval = now →
+      end-of-day (≥15 min out near midnight), one event for that token with
+      `threshold: DateComponents(minute: usageMinutes)`. Thresholds count
+      **usage** time, not wall-clock, and the interval must start at unlock
+      time so earlier usage that day can't pre-trigger the relock. The App
+      Group holds a map `activityName(sessionId) → {token, safetyDeadline}`;
+      the monitor's `eventDidReachThreshold` (unreliable on some iOS 26
+      builds) and `intervalDidEnd` re-shield that one token and clear the
+      record, and `reconcileLockState()` is the mandatory fallback — on
+      foreground it re-shields any app whose activity is no longer running or
+      whose safetyDeadline passed. Any OS failure refunds via
+      `AppModel.refund(seconds:sourceId:)`. BlockerView lists each selected
+      app with an "Unlock N min of use" menu. The whole-selection wall-clock
+      redeem still works alongside; "Lock now" cancels per-app unlocks
+      without refunding them (consumed usage is unknowable).
+- [ ] **Verify per-app unlock on device:** lock ≥2 apps, unlock one for 15 min
+      of use, confirm the other stays shielded, burn the usage, confirm the
+      app re-locks (or re-locks on next LockIN foreground via reconcile), and
+      confirm a refund lands if the schedule is refused.
+- [x] **Shield → drill handoff in the app** (2026-07-09): notification tap
+      (`AppDelegate` / `UNUserNotificationCenterDelegate`) or any launch
+      within 30 minutes of a shield tap consumes the pending token
+      (`UnlockRequestRouter` + `PendingUnlock`), routes straight into the
+      rolling drill full-screen, and surfaces the target app (via
+      FamilyControls `Label(token)`) in the drill header and next to the
+      redeem controls; Done lands on the Block tab. Notification authorization
+      is requested at first launch — move it into the Phase 4 onboarding flow
+      when that exists.
 - [x] App Group + Family Controls on both new targets
       (`tranq.LockIN.LockINShieldConfig`, `tranq.LockIN.LockINShieldAction`) —
       both bundle ids added to the Phase 5 distribution-entitlement list.
 - [ ] **Verify on device:** lock apps, open one, confirm the branded shield
-      renders and the button closes the app.
+      renders and the button closes the app; then confirm the notification
+      appears, tapping it opens LockIN straight into the rolling drill with
+      the tapped app shown in the header, and the same happens on a manual
+      launch within 30 minutes of a shield tap.
 
 ### Phase 4 — Product polish ⬜
 
 A first-time user sets it up and uses it with no hand-holding; content doesn't
 feel repetitive.
 
+- [x] **Continuous rolling drill** (2026-07-09): replaced the fixed-length
+      drill + completion screen with an endless session in `DrillView`. One
+      question at a time, drawn weighted toward the weakest topics (unseen
+      topics favored too), no immediate repeats, seconds banked live per
+      correct answer, persistent header with the live banked balance and a
+      Done button that just dismisses. UI + draw-order only — PrepCore's
+      public API and 30 tests unchanged.
 - [ ] **First-run onboarding:** authorize → pick apps → lock as one guided flow.
 - [ ] **Grow the question bank:** more GRE; add SAT/LSAT (the model is
       test-agnostic via the `test` field).
@@ -331,8 +396,19 @@ Hard-won; read before touching the blocker.
   extension** — and it's slow. Request early.
 - **DeviceActivity limits:** minimum interval **15 minutes**, maximum 1 week —
   you cannot test a shorter unlock. Max 50 shielded tokens per shield property.
+- **Event thresholds count USAGE, not wall-clock** — and they accumulate over
+  the whole monitoring interval. A per-app unlock's interval must start at the
+  unlock moment; an interval reaching back into the day would count earlier
+  usage and could trip the relock instantly. `eventDidReachThreshold` is
+  unreliable on some iOS 26 builds — the reconcile fallback (dead activity or
+  passed safetyDeadline → re-shield) is mandatory.
 - **`intervalDidEnd` is unreliable** — it fires late or occasionally not at
   all. The `reconcileLockState()` fallback is mandatory, not optional.
+- **Extensions cannot launch the parent app.** There is no supported API for a
+  shield (or any app extension) to open LockIN directly. The shield → drill
+  flow works by handoff: token into App Group defaults + a local notification
+  whose tap opens the app. The notification only shows if the **main app**
+  holds notification authorization — request it early.
 - **The monitor extension has a ~6 MB memory limit** — keep it tiny; no heavy
   work in the extension.
 - **The simulator can't run Family Controls** — physical device only.
