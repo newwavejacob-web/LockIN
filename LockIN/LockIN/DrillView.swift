@@ -2,13 +2,16 @@
 //  DrillView.swift
 //  LockIN
 //
-//  The study loop: pick a test/section, then answer questions one at a time
-//  with the right input per QuestionKind, immediate feedback + explanation, and
-//  live banking of earned minutes.
+//  The study loop: pick a test/section, then drill continuously — one question
+//  at a time, drawn to favor weak topics, with the right input per
+//  QuestionKind, immediate feedback + explanation, and live banking of earned
+//  minutes. There is no session length: keep answering until you tap Done.
 //
 
 import SwiftUI
 import PrepCore
+import FamilyControls
+import ManagedSettings
 
 // MARK: - Setup
 
@@ -54,13 +57,13 @@ struct DrillSetupView: View {
 
             Section {
                 NavigationLink {
-                    DrillView(questions: pool.shuffled())
+                    DrillView(pool: pool)
                 } label: {
-                    Label("Drill \(pool.count) questions", systemImage: "play.fill")
+                    Label("Start drilling", systemImage: "play.fill")
                 }
                 .disabled(pool.isEmpty)
             } footer: {
-                Text("Correct answers bank unlock time. Harder questions are worth more, up to a daily cap.")
+                Text("Questions keep coming, weighted toward your weakest topics, until you tap Done. Correct answers bank unlock time immediately — harder questions are worth more, up to a daily cap.")
             }
         }
         .navigationTitle("New drill")
@@ -72,37 +75,136 @@ struct DrillSetupView: View {
 
 // MARK: - Drill
 
+/// A continuous rolling session: draws one question at a time from `pool`,
+/// biased toward the user's weakest topics, forever. Each correct answer banks
+/// its seconds the moment it's graded (via `AppModel.submit`, the earn side of
+/// the ledger); the header shows the live balance and Done just leaves.
 struct DrillView: View {
     @Environment(AppModel.self) private var model
+    @Environment(BlockerController.self) private var blocker
     @Environment(\.dismiss) private var dismiss
 
-    let questions: [Question]
+    let pool: [Question]
+    /// When the session was launched from a shield tap, the app the user is
+    /// studying to unlock. Its minute bubbles live in the header and light up
+    /// as the balance crosses them, so the unlock happens right here — no trip
+    /// to the Block tab to spend what you just earned.
+    var unlockTarget: ApplicationToken? = nil
 
-    @State private var index = 0
+    @State private var unlockError: String?
+
+    @State private var current: Question?
     @State private var questionStart = Date()
     @State private var result: AnswerResult?
 
-    // Per-question input state (reset on advance).
+    // Per-question input state (reset on each draw).
     @State private var single: Int? = nil
     @State private var multi: Set<Int> = []
     @State private var qc: QCAnswer? = nil
     @State private var numericText = ""
 
-    // Session tally for the completion summary.
-    @State private var answeredCount = 0
-    @State private var correctCount = 0
+    // Running tally shown in the header.
     @State private var earnedThisSession = 0
+
+    /// Recently shown question ids, kept to avoid immediate repeats while the
+    /// pool is large enough to allow it.
+    @State private var recentIDs: [UUID] = []
 
     var body: some View {
         Group {
-            if index < questions.count {
-                questionScreen(questions[index])
+            if let current {
+                questionScreen(current)
             } else {
-                completionScreen
+                ContentUnavailableView(
+                    "No questions",
+                    systemImage: "tray",
+                    description: Text("This test/section has no questions yet.")
+                )
             }
         }
-        .navigationTitle(index < questions.count ? "Question \(index + 1) of \(questions.count)" : "Done")
+        .safeAreaInset(edge: .top, spacing: 0) { header }
+        .navigationTitle("Drill")
         .navigationBarTitleDisplayMode(.inline)
+        .onAppear { if current == nil { drawNext() } }
+        .alert("LockIN", isPresented: Binding(
+            get: { unlockError != nil },
+            set: { if !$0 { unlockError = nil } }
+        )) {
+            Button("OK") { }
+        } message: {
+            Text(unlockError ?? "")
+        }
+    }
+
+    // MARK: Header
+
+    /// Persistent across every question: the live banked balance (updates the
+    /// instant an answer banks) and the way out.
+    private var header: some View {
+        VStack(spacing: 8) {
+            HStack(alignment: .center) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Banked \(TimeFormat.human(model.bankedSeconds))")
+                        .font(.headline)
+                        .monospacedDigit()
+                    Text("+\(TimeFormat.human(earnedThisSession)) this session")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .monospacedDigit()
+                }
+                Spacer()
+                Button("Done") { dismiss() }
+                    .buttonStyle(.bordered)
+            }
+
+            unlockBar
+        }
+        .padding(.horizontal)
+        .padding(.vertical, 10)
+        .background(.bar)
+        .overlay(alignment: .bottom) { Divider() }
+        .animation(.snappy, value: model.bankedSeconds)
+    }
+
+    /// The inline redeem controls for a shield-tapped app: its icon, and the
+    /// minute bubbles lighting up one by one as answers bank time. Spending
+    /// leaves the drill immediately — the whole point of the purchase is to go
+    /// use the app, and ContentView lands them on Block where the live unlock
+    /// bubble confirms it.
+    @ViewBuilder
+    private var unlockBar: some View {
+        if let unlockTarget {
+            VStack(spacing: 8) {
+                HStack(spacing: 6) {
+                    Image(systemName: "lock.open")
+                        .foregroundStyle(.secondary)
+                    AppTokenLabel(token: unlockTarget)
+                        .labelStyle(.titleAndIcon)
+                        .lineLimit(1)
+                    Spacer()
+                }
+                .font(.caption)
+
+                // Guard against a second purchase for the same app: that would
+                // arm a second relock activity on one token, and whichever
+                // threshold tripped first would re-shield an app the user had
+                // just paid twice for.
+                if blocker.isUnlocked(unlockTarget) {
+                    Label("Unlocked — go use it", systemImage: "checkmark.circle.fill")
+                        .font(.caption)
+                        .foregroundStyle(.green)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                } else {
+                    UnlockChips(
+                        target: unlockTarget,
+                        diameter: 50,
+                        onUnlocked: { _ in dismiss() },
+                        onError: { unlockError = $0 }
+                    )
+                }
+            }
+            .padding(.top, 4)
+        }
     }
 
     // MARK: Question screen
@@ -119,9 +221,9 @@ struct DrillView: View {
                 if let result {
                     FeedbackView(result: result)
                     Button {
-                        advance()
+                        drawNext()
                     } label: {
-                        Text(index + 1 < questions.count ? "Next" : "Finish")
+                        Text("Next")
                             .frame(maxWidth: .infinity)
                     }
                     .buttonStyle(.borderedProminent)
@@ -140,6 +242,7 @@ struct DrillView: View {
             }
             .padding()
         }
+        .id(question.id) // reset scroll position on each new draw
     }
 
     // MARK: Per-kind input
@@ -206,28 +309,6 @@ struct DrillView: View {
         }
     }
 
-    // MARK: Completion
-
-    private var completionScreen: some View {
-        VStack(spacing: 16) {
-            Image(systemName: "checkmark.seal.fill")
-                .font(.system(size: 56))
-                .foregroundStyle(.green)
-            Text("Drill complete")
-                .font(.title2.bold())
-            VStack(spacing: 4) {
-                Text("\(correctCount) / \(answeredCount) correct")
-                Text("Banked \(TimeFormat.human(earnedThisSession)) this session")
-                    .foregroundStyle(.secondary)
-            }
-            .font(.headline)
-            Button("Done") { dismiss() }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.large)
-        }
-        .padding()
-    }
-
     // MARK: Logic
 
     private func currentAnswer(for kind: QuestionKind) -> AnswerInput? {
@@ -246,15 +327,45 @@ struct DrillView: View {
     private func check(_ question: Question) {
         guard let answer = currentAnswer(for: question.kind) else { return }
         let timeMs = Int(Date().timeIntervalSince(questionStart) * 1000)
+        // submit grades, records the attempt, and banks any earned seconds into
+        // the ledger right here — the header's balance updates immediately.
         let outcome = model.submit(question: question, answer: answer, timeMs: timeMs)
         result = outcome
-        answeredCount += 1
-        if outcome.correct { correctCount += 1 }
         earnedThisSession += outcome.outcome.earnedSeconds
     }
 
-    private func advance() {
-        index += 1
+    /// Draw the next question: weight every candidate by how weak its topic is
+    /// (accuracy from attempt history via `model.topicStats`), skip questions
+    /// shown in the last few draws, then pick weighted-random.
+    private func drawNext() {
+        guard !pool.isEmpty else { return }
+
+        // Never repeat within the last few draws, as far as the pool allows.
+        let memory = min(pool.count - 1, 5)
+        let recent = Set(recentIDs.suffix(memory))
+        let candidates = pool.filter { !recent.contains($0.id) }
+
+        let accuracyByTopic = Dictionary(
+            model.topicStats.map { ($0.key, $0.accuracy) },
+            uniquingKeysWith: { first, _ in first }
+        )
+        // 0% accuracy → weight 4, 100% → weight 1; untouched topics sit high
+        // (2.5) so new material still surfaces early.
+        let weights = candidates.map { question in
+            accuracyByTopic[question.topic].map { 1.0 + 3.0 * (1.0 - $0) } ?? 2.5
+        }
+
+        var roll = Double.random(in: 0..<weights.reduce(0, +))
+        var drawn = candidates[0]
+        for (question, weight) in zip(candidates, weights) {
+            roll -= weight
+            if roll < 0 { drawn = question; break }
+        }
+
+        recentIDs.append(drawn.id)
+        if recentIDs.count > memory { recentIDs.removeFirst(recentIDs.count - memory) }
+
+        current = drawn
         result = nil
         single = nil
         multi = []
@@ -372,9 +483,11 @@ struct FeedbackView: View {
 #Preview("Setup") {
     NavigationStack { DrillSetupView() }
         .environment(AppModel.preview)
+        .environment(BlockerController())
 }
 
 #Preview("Drill") {
-    NavigationStack { DrillView(questions: QuestionBank.all) }
+    NavigationStack { DrillView(pool: QuestionBank.all) }
         .environment(AppModel.preview)
+        .environment(BlockerController())
 }

@@ -137,4 +137,5 @@ struct AccuracyRow: View {
 #Preview {
     HomeView()
         .environment(AppModel.preview)
+        .environment(BlockerController())
 }

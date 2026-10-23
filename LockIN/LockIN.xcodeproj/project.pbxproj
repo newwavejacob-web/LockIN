@@ -14,6 +14,7 @@
 		CC30000000000000000000B1 /* ShieldConfigurationExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC30000000000000000000C1 /* ShieldConfigurationExtension.swift */; };
 		CC30000000000000000000B3 /* LockINShieldConfig.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = CC30000000000000000000C0 /* LockINShieldConfig.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		DD40000000000000000000B1 /* ShieldActionExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD40000000000000000000C1 /* ShieldActionExtension.swift */; };
+		DD40000000000000000000B4 /* BlockerShared.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB20000000000000000000C2 /* BlockerShared.swift */; };
 		DD40000000000000000000B3 /* LockINShieldAction.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = DD40000000000000000000C0 /* LockINShieldAction.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
@@ -359,6 +360,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				DD40000000000000000000B1 /* ShieldActionExtension.swift in Sources */,
+				DD40000000000000000000B4 /* BlockerShared.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

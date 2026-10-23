@@ -103,11 +103,12 @@ final class AppModel {
     }
 
     /// Debit banked minutes for an unlock session. This is the ledger half of
-    /// the integration seam; the Family Controls blocker will call it and then
-    /// separately clear its `ManagedSettingsStore`. Surfaced here so the app can
-    /// already exercise spending end-to-end.
-    func spend(seconds: Int, label: String) throws {
-        try controller.spend(seconds: seconds, on: UnlockSession(label: label))
+    /// the integration seam; the blocker calls it FIRST and touches the
+    /// `ManagedSettingsStore` only on success. The caller supplies the session
+    /// so its id can also name the DeviceActivity and key the refund — one id
+    /// ties the ledger row, the OS activity, and the App Group record together.
+    func spend(seconds: Int, on session: UnlockSession) throws {
+        try controller.spend(seconds: seconds, on: session)
         if let newEntry = controller.entries.last {
             context.insert(StoredLedgerEntry(newEntry))
         }
@@ -116,10 +117,11 @@ final class AppModel {
 
     /// Give back unused minutes — a cancelled unlock, or an OS scheduling
     /// failure right after a spend. Ledger half only; re-shielding is the
-    /// blocker's job.
-    func refund(seconds: Int) {
+    /// blocker's job. `sourceId` (the unlock session's id) links the REFUND
+    /// row back to the SPEND it reverses.
+    func refund(seconds: Int, sourceId: UUID? = nil) {
         guard seconds > 0 else { return }
-        controller.refund(seconds: seconds)
+        controller.refund(seconds: seconds, sourceId: sourceId)
         if let newEntry = controller.entries.last {
             context.insert(StoredLedgerEntry(newEntry))
         }
