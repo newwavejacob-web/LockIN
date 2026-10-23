@@ -2,19 +2,66 @@
 
 **Study to earn screen time.** LockIN is a native iOS app that shields your
 distracting apps behind iOS Screen Time (Family Controls). Answering
-standardized-test questions correctly earns "unlock minutes"; redeeming them
-temporarily lifts the shields, and the apps re-lock automatically when the
-window ends.
+standardized-test questions correctly banks "unlock minutes"; spending them
+buys minutes of **use** for one app at a time, and the app re-locks
+automatically once that much use is consumed.
 
-> **Status (July 2026):** the study/economy core is done and tested; the
-> blocker (manual lock, redeem seam, timed auto-relock via the `LockINMonitor`
-> extension) and the Phase 2 robustness work (foreground reconcile, cancel +
-> refund, countdown UI, double-redeem guard, midnight-safe windows, revoked-auth
-> handling) are **built and compiling**. What's left before polish: run the
-> on-device verification pass (redeem → wait → confirm auto-relock). See
-> [Roadmap](#roadmap-to-a-polished-product).
+> **Status (July 2026):** the study/economy core is done and tested; Phases
+> 1–2 verified on device. Phase 3 (branded shield, shield → drill handoff,
+> per-app usage unlocks) and the target-centric redeem redesign (2026-07-10:
+> spend banked time on the shield-tapped app in 1/2/5/10-minute usage
+> denominations; the old whole-selection wall-clock redeem is **removed**) are
+> **built and compiling** — the on-device verification pass is the next step.
+> See [Roadmap](#roadmap-to-a-polished-product).
+
+> ▶ **Demo video:** _TODO — link coming._ This is currently the only way to
+> see LockIN running without building it yourself; see below for why.
 
 ---
+
+## Why there's no public build (yet)
+
+LockIN is built on Apple's **Family Controls** framework (Screen Time API:
+`FamilyControls`, `ManagedSettings`, `DeviceActivity`). Every target that
+touches it carries the `com.apple.developer.family-controls` entitlement —
+in this project that's all four bundle ids:
+
+| Target | Bundle id |
+|---|---|
+| App | `tranq.LockIN` |
+| Device Activity Monitor extension | `tranq.LockIN.LockINMonitor` |
+| Shield Configuration extension | `tranq.LockIN.LockINShieldConfig` |
+| Shield Action extension | `tranq.LockIN.LockINShieldAction` |
+
+Apple splits that entitlement in two:
+
+- **Development** — granted automatically to any developer team. It only
+  works in builds signed with a *development* provisioning profile, i.e.
+  installed from Xcode onto devices registered to the team. That's how
+  LockIN has been built and verified on device so far.
+- **Distribution** — required for **TestFlight, the App Store, or any other
+  distribution-signed build**. Apple grants it manually, by request, **per
+  bundle id** (app *and* each extension), and review takes days to weeks.
+
+**The distribution entitlement has not been requested yet** (it's the first
+item in [Phase 5](#phase-5--ship-)). Until Apple approves it for all four
+bundle ids, there is no way to produce a build anyone else can install — no
+TestFlight link, no App Store listing, no downloadable .ipa. That's a
+platform gate, not a code-completeness gate.
+
+**So, to see it work:**
+
+1. **Watch the demo video** (link above) — the full loop on a real device:
+   pick apps → lock → tap the shield → drill → spend banked minutes → app
+   re-locks after that much use.
+2. **Build it yourself** — clone, open `LockIN/LockIN.xcodeproj`, switch the
+   team and bundle ids / App Group (`group.tranq.LockIN`) to your own, and run
+   on a **physical device** (Screen Time does nothing in the simulator). Your
+   free development entitlement is enough for your own device. See
+   [Building & testing](#building--testing).
+
+---
+
 ## How it works
 
 1. **Authorize & pick.** First run asks for Screen Time authorization
@@ -28,19 +75,30 @@ window ends.
    scaled by difficulty and clamped by a daily cap; a persistent header shows
    the live banked balance, and Done just leaves. Earnings land in an
    append-only ledger.
-4. **Redeem.** Two ways, both debit the ledger **first** and touch the OS only
-   on success:
-   - **Whole selection, wall-clock:** spend banked minutes (15/30/60) to lift
-     every shield for that many minutes.
-   - **One app, usage time:** buy N minutes of *use* for a single app. Shields
-     are per-app — the store always holds (selected − unlocked) — and the
-     relock is a `DeviceActivityEvent` usage threshold, so the clock only runs
-     while that app is actually used (end-of-day safety deadline at the latest).
-5. **Re-lock.** When the window ends, the Device Activity Monitor extension
-   re-applies the shields. A `reconcileLockState()` fallback re-shields on
-   every app foreground if the extension callback never fires (it's unreliable
-   by design — see [Gotchas](#known-constraints--gotchas)). You can also
-   **lock early** and get the unused whole minutes refunded to the ledger.
+4. **Redeem — one app, usage time.** Tapping a shield's button hands the
+   blocked app's token to LockIN (notification handoff) and routes into the
+   drill; afterwards the Block tab's redeem section centers on that app:
+   "You've banked X min" with **Save for later** (pure dismissal — minutes stay
+   in the ledger) or **Spend on \<app\>** in 1/2/5/10-minute denominations of
+   *use* (each disabled if unaffordable; empty state when the balance is 0).
+   Any other selected app can be unlocked the same way without a shield tap.
+   Every spend debits the ledger **first** and touches the OS only on success.
+   Shields are per-app — apps by (selected − unlocked), categories via
+   `.specific(_, except: unlocked)` so a category-blocked app can be bought out
+   individually — and the relock is a `DeviceActivityEvent` usage threshold, so
+   the clock only runs while that app is actually used (end-of-day safety
+   deadline at the latest). There is no wall-clock whole-selection unlock.
+5. **Re-lock.** When the usage threshold (or its end-of-day interval) fires,
+   the Device Activity Monitor extension re-applies the shields. Because iOS
+   gives the app no incremental usage readout, the "currently unlocked" UI is
+   **static** ("relocks after N min of use"), not a countdown — it flips to
+   locked on the next foreground, when `reconcileLockState()` re-reads the App
+   Group records. That reconcile is also the mandatory fallback if the
+   extension callback never fires (it's unreliable by design — see
+   [Gotchas](#known-constraints--gotchas)). A per-app **Lock now** re-shields
+   immediately but **forfeits** unused purchased time: the minutes were
+   committed at spend time and iOS doesn't report how many were consumed, so
+   no partial refund can be computed.
 
 ## Architecture
 
@@ -69,8 +127,7 @@ Three layers; dependencies only point inward.
 OS only on success, refund the session id if the OS step fails):
 
 ```
-AppModel.spend(seconds:on: UnlockSession)  →  BlockerController.unlock(forMinutes:)        # whole selection, wall-clock
-                                           →  BlockerController.unlock(appToken:label:usageMinutes:)  # one app, usage time
+AppModel.spend(seconds:on: UnlockSession)  →  BlockerController.unlock(appToken:label:usageMinutes:)  # one app, usage time
 ```
 
 PrepCore imports **no system frameworks** and its public API and 30 XCTest
@@ -100,8 +157,8 @@ LockIN/
       ├─ AppModel.swift               # single UI-facing object; spend seam lives here
       ├─ Persistence.swift            # SwiftData @Model mirror of value types
       ├─ HomeView.swift / DrillView.swift / StatsView.swift
-      ├─ BlockerController.swift      # authorization, shields, unlock scheduling, cancel, reconcile
-      ├─ BlockerView.swift            # picker, lock/unlock, redeem + countdown/refund UI
+      ├─ BlockerController.swift      # authorization, shields, per-app unlock scheduling, relock, reconcile
+      ├─ BlockerView.swift            # picker, lock/unlock, target-centric redeem + active-unlock rows
       ├─ UnlockRequestRouter.swift    # shield-tap handoff: consume pendingUnlockToken, route to drill
       └─ BlockerShared.swift          # compiled into app + monitor + shield-action targets
    └─ LockINMonitor/                  # Device Activity Monitor extension target
@@ -123,10 +180,15 @@ LockIN/
   crossing question gets partial credit; after that, correct answers earn 0 but
   attempts are still recorded — studying continues, banking stops. The clamp is
   one pure function (`EarnEngine.cappedEarn`), testable without a clock.
-- **Debit first, OS second.** Redeeming calls `AppModel.spend`; only if the
-  ledger debit succeeds does `BlockerController.unlock(forMinutes:)` clear
-  shields and schedule the relock window. A failed OS call never leaves the
-  ledger and the shields disagreeing in the user's favor.
+- **Debit first, OS second.** Spending calls `AppModel.spend`; only if the
+  ledger debit succeeds does `BlockerController.unlock(appToken:label:usageMinutes:)`
+  arm the relock activity and lift that app's shield. A failed OS call refunds
+  against the session id and never leaves the ledger and the shields
+  disagreeing in the user's favor.
+- **Spends are final once use begins.** iOS never reports how much of a usage
+  threshold has been consumed, so "Lock now" on an active per-app unlock
+  re-shields immediately but forfeits the remainder — an honest partial refund
+  is impossible, and the UI says so.
 - **Questions live in code, not SwiftData.** Only the ledger and attempts
   persist. Seed questions have fixed UUIDs so stored attempts keep joining to
   the right question across launches and edits.
@@ -148,7 +210,7 @@ LockIN/
 | App Group | `group.tranq.LockIN` (on **both** app and extension targets) |
 | Named `ManagedSettingsStore` | `"lockin"` (shared by app + extension) |
 | Deployment target | iOS 26.5 (must be ≤ your device's iOS) |
-| Targets | `LockIN` (app), `LockINMonitor` (Device Activity Monitor extension), `PrepCore` (package) |
+| Targets | `LockIN` (app), `LockINMonitor` (Device Activity Monitor extension), `LockINShieldConfig` + `LockINShieldAction` (shield extensions), `PrepCore` (package) |
 | Test device | **Physical device only** — Family Controls does nothing in the simulator |
 
 ## Building & testing
@@ -156,6 +218,12 @@ LockIN/
 - **App:** open `LockIN/LockIN.xcodeproj` in Xcode and run the `LockIN` scheme
   on a **physical iOS device** (26.5 or later). Anything touching the blocker
   is a no-op in the simulator.
+- **Signing:** `LockIN` and `LockINShieldAction` request the Time Sensitive
+  Notifications entitlement (shield → app handoff). If signing fails with
+  "provisioning profile doesn't include ... time-sensitive", add the **Time
+  Sensitive Notifications** capability in Signing & Capabilities so automatic
+  signing regenerates the profile. The code itself compiles with signing off:
+  `xcodebuild -project LockIN/LockIN.xcodeproj -scheme LockIN -destination 'generic/platform=iOS' CODE_SIGNING_ALLOWED=NO build`.
 - **Economy tests** (XCTest ships with Xcode, not the Command Line Tools):
 
   ```sh
@@ -228,6 +296,14 @@ auto re-lock when the window ends.
 No stuck-unlocked or stuck-locked states; refunds are correct; the UI always
 reflects the true lock state.
 
+> **Historical note (2026-07-10):** the whole-selection wall-clock window that
+> Phases 1–2 built and hardened was **removed** in the redeem redesign —
+> unlocks are per-app, usage-based only now. The patterns proved here
+> (foreground reconcile, debit-first ordering, refund on OS failure,
+> midnight-safe absolute-date schedules) all carried over to the per-app path;
+> `reconcileLockState()` and the monitor extension still clean up any legacy
+> `.unlock` window left by an old build.
+
 - [x] **Reconcile on foreground.** `ContentView` watches `scenePhase` and calls
       `refreshAuthorization()` + `reconcileLockState()` on every `.active`, not
       just at launch. Reconcile also re-reads the persisted end date, since the
@@ -287,20 +363,39 @@ A blocked app shows a branded LockIN shield instead of the stock gray one.
       `threshold: DateComponents(minute: usageMinutes)`. Thresholds count
       **usage** time, not wall-clock, and the interval must start at unlock
       time so earlier usage that day can't pre-trigger the relock. The App
-      Group holds a map `activityName(sessionId) → {token, safetyDeadline}`;
-      the monitor's `eventDidReachThreshold` (unreliable on some iOS 26
-      builds) and `intervalDidEnd` re-shield that one token and clear the
+      Group holds a map `activityName(sessionId) → {token, safetyDeadline,
+      usageMinutes}`; the monitor's `eventDidReachThreshold` (unreliable on
+      some iOS 26 builds) and `intervalDidEnd` re-shield and clear the
       record, and `reconcileLockState()` is the mandatory fallback — on
       foreground it re-shields any app whose activity is no longer running or
       whose safetyDeadline passed. Any OS failure refunds via
-      `AppModel.refund(seconds:sourceId:)`. BlockerView lists each selected
-      app with an "Unlock N min of use" menu. The whole-selection wall-clock
-      redeem still works alongside; "Lock now" cancels per-app unlocks
-      without refunding them (consumed usage is unknowable).
-- [ ] **Verify per-app unlock on device:** lock ≥2 apps, unlock one for 15 min
-      of use, confirm the other stays shielded, burn the usage, confirm the
-      app re-locks (or re-locks on next LockIN foreground via reconcile), and
-      confirm a refund lands if the schedule is refused.
+      `AppModel.refund(seconds:sourceId:)`.
+- [x] **Target-centric redeem redesign** (2026-07-10): the redeem section is
+      built around the shield-tapped app (`UnlockRequestRouter.target`). After
+      a drill it shows "You've banked X min" with two paths — **Save for
+      later** (pure dismissal; minutes stay in the ledger) and **Spend on
+      \<app\>** with 1/2/5/10-minute buttons labeled as minutes of use, each
+      disabled when `bankedSeconds < minutes*60` (matching `spend`'s overspend
+      throw), plus an "Answer questions to earn minutes" empty state at 0
+      balance. Buttons call `unlock(appToken:label:usageMinutes:)`. Active
+      unlocks render as **static** rows ("Unlocked — relocks after N min of
+      use"; iOS has no incremental usage readout, so no live countdown) that
+      flip to locked on the next foreground reconcile, each with a **Lock
+      now** (`BlockerController.relock`) that re-shields immediately and
+      forfeits unused time — no partial refund, consumed usage is unknowable.
+      Other selected apps keep an "Unlock → N min of use" menu. The
+      whole-selection wall-clock redeem (`unlock(forMinutes:)`, `unlockEndsAt`,
+      countdown + refund UI) is **removed**; reconcile and the extension keep
+      legacy-window cleanup only. Category shields now use
+      `.specific(_, except: unlockedTokens)` (app + extension both), so a
+      shield-tapped app that's blocked via a *category* can be bought out too.
+- [ ] **Verify per-app unlock on device:** block ≥2 apps (ideally one via a
+      category), tap a shield → drill → spend 2 min on the target app; confirm
+      the other app stays shielded, burn the usage, confirm the app re-locks
+      (or re-locks on next LockIN foreground via reconcile); confirm "Lock
+      now" re-shields instantly with no refund row; confirm "Save for later"
+      leaves the balance untouched; and confirm a refund lands if the OS
+      refuses the schedule.
 - [x] **Shield → drill handoff in the app** (2026-07-09): notification tap
       (`AppDelegate` / `UNUserNotificationCenterDelegate`) or any launch
       within 30 minutes of a shield tap consumes the pending token
@@ -334,8 +429,11 @@ feel repetitive.
 - [ ] **First-run onboarding:** authorize → pick apps → lock as one guided flow.
 - [ ] **Grow the question bank:** more GRE; add SAT/LSAT (the model is
       test-agnostic via the `test` field).
-- [ ] **Redeem UX:** custom amounts (respecting the 15-minute DeviceActivity
-      floor), clearer affordable/locked states.
+- [x] **Redeem UX** (2026-07-10): clear affordable/disabled states and a
+      zero-balance empty state shipped with the target-centric redeem
+      redesign (see Phase 3). Still open if wanted: a custom usage amount
+      beyond the 1/2/5/10 presets (thresholds have no 15-min floor — that
+      floor is on the monitoring interval, already padded in the controller).
 - [ ] **Empty states, error toasts, time-formatting polish.**
 - [ ] **Settings screen:** change blocked apps; expose `EarnConfig` tunables
       (base seconds, daily cap, multipliers).
@@ -358,10 +456,10 @@ feel repetitive.
 > daily cap, and difficulty multipliers with sensible ranges. Persist overrides
 > and rebuild the engine from them at launch.
 
-> Add a custom redeem amount to BlockerView: a stepper/slider from 15 minutes
-> (the DeviceActivity floor — enforce it) up to the banked balance, with clear
-> disabled/affordable states on all redeem controls and an empty-state when the
-> balance is 0 ("Answer questions to earn minutes").
+> Add a custom usage amount to BlockerView's spend controls: a stepper from
+> 1 minute up to the banked balance (usage thresholds have no 15-minute floor;
+> the monitoring-interval padding in BlockerController already handles the OS
+> minimum), alongside the existing 1/2/5/10 presets.
 
 ### Phase 5 — Ship ⬜
 
@@ -393,14 +491,25 @@ Hard-won; read before touching the blocker.
 - **Entitlement:** development Family Controls is automatic and free;
   **distribution needs Apple approval per bundle id, including each
   extension** — and it's slow. Request early.
-- **DeviceActivity limits:** minimum interval **15 minutes**, maximum 1 week —
-  you cannot test a shorter unlock. Max 50 shielded tokens per shield property.
+- **DeviceActivity limits:** minimum monitoring **interval** 15 minutes
+  (usage *thresholds* can be shorter — the controller pads the interval, not
+  the threshold), maximum 1 week. Max 50 shielded tokens per shield property.
 - **Event thresholds count USAGE, not wall-clock** — and they accumulate over
   the whole monitoring interval. A per-app unlock's interval must start at the
   unlock moment; an interval reaching back into the day would count earlier
   usage and could trip the relock instantly. `eventDidReachThreshold` is
   unreliable on some iOS 26 builds — the reconcile fallback (dead activity or
   passed safetyDeadline → re-shield) is mandatory.
+- **iOS never reports threshold progress.** There is no API to ask how much of
+  a usage threshold has been consumed, which forces two product decisions: the
+  active-unlock UI is **static** (no countdown; it flips to locked on the next
+  foreground reconcile), and "Lock now" **forfeits** unused purchased time —
+  a partial refund can't be computed honestly.
+- **Category shields need `except:` for per-app unlocks.** Subtracting a token
+  from `shield.applications` does nothing if the app is shielded via a
+  category; use `.specific(categories, except: unlockedTokens)` and re-derive
+  the whole shield (app `syncShields()` and the extension's
+  `reassertShields()` both do) rather than poking single tokens.
 - **`intervalDidEnd` is unreliable** — it fires late or occasionally not at
   all. The `reconcileLockState()` fallback is mandatory, not optional.
 - **Extensions cannot launch the parent app.** There is no supported API for a
