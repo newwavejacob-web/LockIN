@@ -1,4 +1,0 @@
-module PrepCorePackageTests {
-    header "/Users/jacob/Desktop/LockIN/PrepCore/.build/arm64-apple-macosx/debug/PrepCorePackageTests.build/PrepCorePackageTests-Swift.h"
-    requires objc
-}
